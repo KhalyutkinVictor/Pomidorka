@@ -6,23 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'State.dart';
 
 class TaskWidget extends ConsumerWidget {
-  final TaskState state;
-  late final StateNotifierProvider<TaskState, Task> provider;
+  final Task state;
 
-  TaskWidget(this.state, {super.key}) {
-    provider = StateNotifierProvider<TaskState, Task>((ref) => state);
-  }
+  TaskWidget(this.state, {super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var taskState = ref.watch(provider);
 
     return Card(
         child: Column(
           children: [
             ListTile(
-              title: Text(taskState.name),
-              subtitle: Text(taskState.description),
+              title: Text(state.name),
+              subtitle: Text(state.description),
             )
           ],
         ),

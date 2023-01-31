@@ -68,7 +68,7 @@ class TaskCreationFormWidget extends ConsumerWidget {
                       return;
                     }
 
-                    ref.read(tasksProvider.notifier).addTask(Task(
+                    ref.read(appState.notifier).addTask(Task(
                       id: Random().nextInt(4294967296),
                       name: taskNameController.text,
                       description: taskDescriptionController.text,

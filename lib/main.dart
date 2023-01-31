@@ -19,18 +19,7 @@ void main() {
 
 final startTime = DateTime.now();
 
-final tasksProvider = StateNotifierProvider<TasksState, List<TaskState>>((ref) => TasksState(
-  <TaskState>[], ref
-));
-
-final showTaskCreationFormProvider = StateProvider<bool>((ref) => false);
-
-final prefsProvider = StateNotifierProvider<PrefsState, SharedPreferences?>((ref) => PrefsState(null));
-
-final isLoadingProvider = Provider<bool>((ref) {
-  final prefs = ref.watch(prefsProvider);
-  return prefs == null;
-});
+final appState = StateNotifierProvider<AppStateNotifier, AppState>((ref) => AppStateNotifier(AppState()));
 
 class MyApp extends ConsumerWidget {
   const MyApp({ Key? key }) : super(key: key);
@@ -39,15 +28,15 @@ class MyApp extends ConsumerWidget {
     SharedPreferences.getInstance().then((sharedPreferences) {
       var diff = startTime.difference(DateTime.now()).inMilliseconds;
       Timer(Duration(milliseconds: max(1200 - diff, 0)), () {
-        ref.read(prefsProvider.notifier).setPrefs(sharedPreferences);
-        var tasksState = ref.read(tasksProvider.notifier);
+        var appStateNotifier = ref.watch(appState.notifier);
+        appStateNotifier.setPrefs(sharedPreferences);
         var jsonString = sharedPreferences.getString('tasks');
         if (jsonString == null) {
           return;
         }
         List<dynamic> tasksJson = jsonDecode(jsonString);
         for (var elJson in tasksJson) {
-          tasksState.addTask(Task.fromJson(elJson as Map<String, dynamic>), saveToDisk: false);
+          appStateNotifier.addTask(Task.fromJson(elJson as Map<String, dynamic>), saveToDisk: false);
         }
       });
     });
@@ -56,9 +45,11 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
 
-    var tasks = ref.watch(tasksProvider);
-    var showTaskCreationForm = ref.watch(showTaskCreationFormProvider);
-    var isLoading = ref.watch(isLoadingProvider);
+    var tasks = ref.watch(appState.select((state) => state.tasks));
+    var showTaskCreationForm = ref.watch(appState.select((state) => state.showTaskCreationForm));
+    var isLoading = ref.watch(appState.select((state) {
+      return state.prefs == null;
+    }));
 
     if (isLoading) {
       getPrefs(ref);
@@ -76,7 +67,7 @@ class MyApp extends ConsumerWidget {
       home: Scaffold(
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            ref.read(showTaskCreationFormProvider.notifier).state = !showTaskCreationForm;
+            ref.read(appState.notifier).toggleCreationFormVisibility();
           },
           child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 150),
@@ -108,13 +99,13 @@ class MyApp extends ConsumerWidget {
                   children: [
                     TaskCreationFormWidget(visibility: showTaskCreationForm,),
                     Column(
-                      children: tasks.map((taskState) =>
+                      children: tasks.map((task) =>
                           Dismissible(
-                            key: ValueKey<int>(taskState.task.id),
+                            key: ValueKey<int>(task.id),
                             direction: DismissDirection.endToStart,
-                            child: TaskWidget(taskState),
+                            child: TaskWidget(task),
                             onDismissed: (dismissDirection) {
-                              ref.read(tasksProvider.notifier).removeTask(taskState.task.id);
+                              ref.read(appState.notifier).removeTask(task.id);
                             },
                           )
                       ).toList(),

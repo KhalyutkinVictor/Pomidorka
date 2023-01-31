@@ -26,7 +26,7 @@ class Task {
       description = json['description'],
       status = TaskStatus.values[json['status'] as int];
 
-  clone({String? name, String? description, TaskStatus? status}) {
+  Task clone({String? name, String? description, TaskStatus? status}) {
     return Task(
       id: id,
       name: name ?? this.name,
@@ -43,52 +43,58 @@ class Task {
   };
 }
 
-class TaskState extends StateNotifier<Task> {
-  final Task task;
+class AppState {
+  SharedPreferences? prefs;
 
-  TaskState(this.task) : super(task);
+  List<Task> tasks = [];
 
-  void renameTask(String name) {
-    state = task.clone(name: name);
+  bool showTaskCreationForm = false;
+
+  AppState({this.prefs = null, this.tasks = const [], this.showTaskCreationForm = false});
+
+  AppState copy({SharedPreferences? prefs = null, List<Task>? tasks = null, bool? showTaskCreationForm = null}) {
+    return AppState(
+      prefs: prefs ?? this.prefs,
+      tasks: tasks ?? this.tasks,
+      showTaskCreationForm: showTaskCreationForm ?? this.showTaskCreationForm
+    );
   }
 
 }
 
-class TasksState extends StateNotifier<List<TaskState>> {
-  final List<TaskState> tasks;
-  final showTaskCreationForm = false;
-  final Ref ref;
+class AppStateNotifier extends StateNotifier<AppState> {
+  final AppState appState;
 
-  TasksState(this.tasks, this.ref) : super(tasks);
+  AppStateNotifier(this.appState) : super(appState);
 
   void addTask(Task task, {bool saveToDisk = true}) {
-    if (state.indexWhere((element) => element.task.id == task.id) != -1) {
+    if (state.tasks.indexWhere((element) => element.id == task.id) != -1) {
       return;
     }
-    state = [...state, TaskState(task)];
+    state = state.copy(tasks: [...state.tasks, task]);
     if (saveToDisk) {
-      _saveStateToDisk();
+      _saveTasksStateToDisk();
     }
   }
 
   void removeTask(int id) {
-    state = state.where((element) => element.task.id != id).toList();
-    _saveStateToDisk();
+    state = state.copy(tasks: state.tasks.where((task) => task.id != id).toList());
+    _saveTasksStateToDisk();
   }
 
-  void _saveStateToDisk() {
-    var tasks = state.map((e) => e.task.toJson()).toList();
-    var encodedString = jsonEncode(tasks);
-    ref.read(prefsProvider)?.setString('tasks', encodedString);
+  void toggleCreationFormVisibility() {
+    state = state.copy(showTaskCreationForm: !state.showTaskCreationForm);
   }
-}
-
-class PrefsState extends StateNotifier<SharedPreferences?> {
-  final SharedPreferences? prefs;
-
-  PrefsState(this.prefs) : super(prefs);
 
   void setPrefs(SharedPreferences prefs) {
-    state = prefs;
+    state = state.copy(prefs: prefs);
+  }
+
+  void _saveTasksStateToDisk() {
+    try {
+      state.prefs?.setString('tasksState', jsonEncode(state.tasks));
+    } finally {
+      // nothing :)
+    }
   }
 }
