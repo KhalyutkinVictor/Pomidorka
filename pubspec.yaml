@@ -39,6 +39,7 @@ dependencies:
   shared_preferences: ^2.0.17
   json_serializable: ^6.6.0
   flutter_launcher_icons: ^0.11.0
+  audioplayers: ^3.0.1
 
 flutter_icons:
   image_path: "images/logo.png"
@@ -70,6 +71,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
    - images/logo.png
+   - assets/sounds/alertSound.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

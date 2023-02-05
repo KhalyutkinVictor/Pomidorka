@@ -45,11 +45,9 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
 
-    var tasks = ref.watch(appState.select((state) => state.tasks));
+    var tasks = ref.watch(appState.select((state) => state.tasks.where((task) => task.status == TaskStatus.inWork).toList()));
     var showTaskCreationForm = ref.watch(appState.select((state) => state.showTaskCreationForm));
-    var isLoading = ref.watch(appState.select((state) {
-      return state.prefs == null;
-    }));
+    var isLoading = ref.watch(appState.select((state) => state.prefs == null));
 
     if (isLoading) {
       getPrefs(ref);
@@ -99,14 +97,49 @@ class MyApp extends ConsumerWidget {
                   children: [
                     TaskCreationFormWidget(visibility: showTaskCreationForm,),
                     Column(
-                      children: tasks.map((task) =>
+                      children: tasks.where((task) => task.status == TaskStatus.inWork).map((task) =>
                           Dismissible(
                             key: ValueKey<int>(task.id),
-                            direction: DismissDirection.endToStart,
-                            child: TaskWidget(task),
+                            direction: DismissDirection.horizontal,
                             onDismissed: (dismissDirection) {
-                              ref.read(appState.notifier).removeTask(task.id);
+                              if (dismissDirection == DismissDirection.startToEnd) {
+                                ref.read(appState.notifier).changeTaskStatus(id: task.id, status: TaskStatus.complete);
+                              }
+                              if (dismissDirection == DismissDirection.endToStart) {
+                                ref.read(appState.notifier).removeTask(task.id);
+                              }
                             },
+                            background: Card(
+                              color: Colors.green,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(20),
+                                    child: const Icon(
+                                        Icons.check_rounded,
+                                        color: Colors.white
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            secondaryBackground: Card(
+                              color: Theme.of(context).colorScheme.error,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Theme.of(context).colorScheme.onError,
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                            child: TaskWidget(task),
                           )
                       ).toList(),
                     )

@@ -82,6 +82,11 @@ class AppStateNotifier extends StateNotifier<AppState> {
     _saveTasksStateToDisk();
   }
 
+  void changeTaskStatus({required int id, required TaskStatus status}) {
+    state = state.copy(tasks: state.tasks.map((task) => task.clone(status: status)).toList());
+    _saveTasksStateToDisk();
+  }
+
   void toggleCreationFormVisibility() {
     state = state.copy(showTaskCreationForm: !state.showTaskCreationForm);
   }

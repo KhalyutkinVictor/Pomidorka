@@ -1,6 +1,7 @@
 
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -15,8 +16,8 @@ class TimerWidget extends StatefulWidget {
 
 class _TimerState extends State<TimerWidget> {
 
-  static const WORK_TIME = 25 * 60;
-  static const BREAK_TIME = 5 * 60;
+  static const WORK_TIME = 5;//25 * 60;
+  static const BREAK_TIME = 5;//5 * 60;
 
   int remainingTimeSeconds = WORK_TIME;
   int loop = 0;
@@ -63,7 +64,7 @@ class _TimerState extends State<TimerWidget> {
 
   void nextLoop() {
     setState(() {
-      SystemSound.play(SystemSoundType.alert);
+      AudioPlayer().play(AssetSource('sounds/alertSound.mp3'));
       loop++;
       remainingTimeSeconds = loop % 2 == 0
         ? WORK_TIME
